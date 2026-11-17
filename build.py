@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble Storinka ocmod zips for ocStore 3 / OpenCart 2.3 and 4.x."""
+"""Assemble the Storinka ocmod zip for ocStore 3.0.4.1 only."""
 import re
 import shutil
 import zipfile
@@ -8,12 +8,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 DIST = ROOT / "dist"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 ZIPS = {
     "oc3": f"storinka-v{VERSION}-ocstore-3.0.4.1.ocmod.zip",
-    "oc2": f"storinka-v{VERSION}-opencart-2.3.ocmod.zip",
-    "oc4": f"storinka-v{VERSION}-opencart-4.ocmod.zip",
 }
 
 
@@ -92,60 +90,34 @@ def convert_twig(src: str) -> str:
     return "".join(out)
 
 
-def copy_tree(upload: Path, engine: str) -> None:
-    # controllers
-    for rel in [
-        "catalog/controller/checkout/storinka.php",
-        "catalog/controller/extension/module/storinka.php",
-        "admin/controller/extension/module/storinka.php",
-    ]:
-        target = upload / rel
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(SRC / rel.replace("catalog/controller/", "catalog/controller/").replace("admin/controller/", "admin/controller/"), target)
-    shutil.copy(SRC / "catalog/controller/checkout/storinka.php", upload / "catalog/controller/checkout/storinka.php")
-    shutil.copy(SRC / "catalog/controller/extension/module/storinka.php", upload / "catalog/controller/extension/module/storinka.php")
-    shutil.copy(SRC / "admin/controller/extension/module/storinka.php", upload / "admin/controller/extension/module/storinka.php")
+def copy_tree(upload: Path) -> None:
+    target = upload / "catalog/controller/extension/module/storinka.php"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(SRC / "catalog/controller/extension/module/storinka.php", target)
+    admin = upload / "admin/controller/extension/module/storinka.php"
+    admin.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(SRC / "admin/controller/extension/module/storinka.php", admin)
 
     for lang in ("uk-ua", "ru-ru", "en-gb"):
-        cat = upload / f"catalog/language/{lang}/checkout"
+        cat = upload / f"catalog/language/{lang}/extension/module"
         cat.mkdir(parents=True, exist_ok=True)
         shutil.copy(SRC / f"language/{lang}/checkout/storinka.php", cat / "storinka.php")
         adm = upload / f"admin/language/{lang}/extension/module"
         adm.mkdir(parents=True, exist_ok=True)
         shutil.copy(SRC / f"language/{lang}/admin/storinka.php", adm / "storinka.php")
-        if engine == "oc2" and lang == "uk-ua":
-            extra = upload / "catalog/language/ukrainian/checkout"
-            extra.mkdir(parents=True, exist_ok=True)
-            shutil.copy(SRC / "language/uk-ua/checkout/storinka.php", extra / "storinka.php")
-            extra_a = upload / "admin/language/ukrainian/extension/module"
-            extra_a.mkdir(parents=True, exist_ok=True)
-            shutil.copy(SRC / "language/uk-ua/admin/storinka.php", extra_a / "storinka.php")
-        if engine == "oc2" and lang == "ru-ru":
-            extra = upload / "catalog/language/russian/checkout"
-            extra.mkdir(parents=True, exist_ok=True)
-            shutil.copy(SRC / "language/ru-ru/checkout/storinka.php", extra / "storinka.php")
-            extra_a = upload / "admin/language/russian/extension/module"
-            extra_a.mkdir(parents=True, exist_ok=True)
-            shutil.copy(SRC / "language/ru-ru/admin/storinka.php", extra_a / "storinka.php")
 
     js = upload / "catalog/view/javascript/storinka"
     js.mkdir(parents=True, exist_ok=True)
     shutil.copy(ROOT / "assets/storinka.css", js / "storinka.css")
     shutil.copy(ROOT / "assets/storinka.js", js / "storinka.js")
 
-    view = upload / "catalog/view/theme/default/template/checkout"
+    view = upload / "catalog/view/theme/default/template/extension/module"
     view.mkdir(parents=True, exist_ok=True)
     admin_view = upload / "admin/view/template/extension/module"
     admin_view.mkdir(parents=True, exist_ok=True)
     for twig in (SRC / "catalog/view/checkout").glob("*.twig"):
-        if engine == "oc3":
-            shutil.copy(twig, view / twig.name)
-        else:
-            (view / (twig.stem + ".tpl")).write_text(convert_twig(twig.read_text()), encoding="utf-8")
-    if engine == "oc3":
-        shutil.copy(SRC / "admin/view/extension/module/storinka.twig", admin_view / "storinka.twig")
-    else:
-        shutil.copy(SRC / "admin/view/extension/module/storinka.tpl", admin_view / "storinka.tpl")
+        shutil.copy(twig, view / twig.name)
+    shutil.copy(SRC / "admin/view/extension/module/storinka.twig", admin_view / "storinka.twig")
 
 
 def zip_dir(folder: Path, zip_path: Path) -> None:
@@ -405,11 +377,10 @@ def main() -> None:
     for engine, name in ZIPS.items():
         stage = stage_root / engine
         stage.mkdir(parents=True)
-        if engine == "oc4":
-            build_oc4(stage)
-        else:
-            (stage / "install.xml").write_text((SRC / "install.xml").read_text(), encoding="utf-8")
-            copy_tree(stage / "upload", engine)
+        if engine != "oc3":
+            raise SystemExit(engine)
+        (stage / "install.xml").write_text((SRC / "install.xml").read_text(), encoding="utf-8")
+        copy_tree(stage / "upload")
         zip_dir(stage, DIST / name)
         print(name, (DIST / name).stat().st_size)
 
