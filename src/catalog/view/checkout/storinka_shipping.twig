@@ -1,0 +1,16 @@
+{% if methods %}
+  {% for method in methods %}
+    {% if method.quote %}
+      {% for quote in method.quote %}
+      <label class="sk-choice {% if quote.code == selected %}is-on{% endif %}">
+        <input type="radio" name="shipping_method" value="{{ quote.code }}" {% if quote.code == selected %}checked{% endif %}>
+        <span><b>{{ quote.title }}</b>{% if method.title and method.title != quote.title %}<small>{{ method.title }}</small>{% endif %}</span>
+        <span class="sk-price">{{ quote.text }}</span>
+      </label>
+      {% endfor %}
+    {% endif %}
+    {% if method.error %}<p class="sk-err">{{ method.error }}</p>{% endif %}
+  {% endfor %}
+{% else %}
+<p class="sk-muted">{{ empty }}</p>
+{% endif %}

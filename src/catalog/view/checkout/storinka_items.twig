@@ -1,0 +1,20 @@
+{% for product in products %}
+<div class="sk-item">
+  {% if product.thumb %}<img src="{{ product.thumb }}" alt="">{% else %}<span class="sk-thumb"></span>{% endif %}
+  <div>
+    <p class="sk-name">{{ product.name }}</p>
+    {% if product.option %}<p class="sk-muted">{{ product.option }}</p>{% endif %}
+    {% if edit %}
+    <div class="sk-qty">
+      <button type="button" data-sk-qty="-1" data-cart="{{ product.cart_id }}">−</button>
+      <span data-sk-qval>{{ product.quantity }}</span>
+      <button type="button" data-sk-qty="1" data-cart="{{ product.cart_id }}">+</button>
+      <button type="button" class="sk-textbtn" data-sk-remove data-cart="{{ product.cart_id }}">×</button>
+    </div>
+    {% else %}
+    <p class="sk-muted">× {{ product.quantity }}</p>
+    {% endif %}
+  </div>
+  <div>{{ product.total }}</div>
+</div>
+{% endfor %}

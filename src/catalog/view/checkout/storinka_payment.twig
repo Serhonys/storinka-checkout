@@ -1,0 +1,10 @@
+{% if methods %}
+  {% for method in methods %}
+  <label class="sk-choice {% if method.code == selected %}is-on{% endif %}">
+    <input type="radio" name="payment_method" value="{{ method.code }}" {% if method.code == selected %}checked{% endif %}>
+    <span><b>{{ method.title }}</b></span>
+  </label>
+  {% endfor %}
+{% else %}
+<p class="sk-muted">{{ empty }}</p>
+{% endif %}

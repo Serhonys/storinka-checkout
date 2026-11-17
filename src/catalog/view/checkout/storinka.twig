@@ -1,0 +1,174 @@
+{{ header }}
+<div class="sk" style="--sk-accent: {{ accent }}; --sk-radius: {{ radius }}px;">
+  <div class="sk-wrap">
+    <div class="sk-top">
+      <div>
+        <p class="sk-kicker">Storinka</p>
+        <h1>{{ heading_title }}</h1>
+        <p class="sk-trust">{{ text_trust }}</p>
+      </div>
+      {% if standard %}
+      <a class="sk-standard" href="{{ standard }}">{{ text_standard }}</a>
+      {% endif %}
+    </div>
+    {{ content_top }}
+    <form id="sk-form" action="{{ action }}" method="post">
+      <div class="sk-grid">
+        <div class="sk-main">
+          {% if login_enabled %}
+          <section class="sk-card">
+            <h2>{{ text_login }}</h2>
+            <div class="sk-login">
+              <div class="sk-field" style="flex:1"><input id="sk-login-email" type="email" placeholder="Email" autocomplete="username"></div>
+              <div class="sk-field" style="flex:1"><input id="sk-login-password" type="password" placeholder="Password" autocomplete="current-password"></div>
+              <button type="button" class="sk-btn sk-ghost" id="sk-login-btn" style="width:auto;padding:0 18px;">{{ text_login }}</button>
+            </div>
+          </section>
+          {% endif %}
+
+          <section class="sk-card">
+            <h2>{{ text_contact }}</h2>
+            <div class="sk-fields">
+              {% for field in fields %}
+              <div class="sk-field {% if field.width == 'half' %}is-half{% endif %}" data-field="{{ field.name }}">
+                <label for="sk-{{ field.name }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+                <input id="sk-{{ field.name }}" type="{{ field.type }}" name="{{ field.name }}" value="{{ field.value }}" {% if field.name == 'telephone' %}autocomplete="tel"{% endif %} {% if field.name == 'email' %}autocomplete="email"{% endif %}>
+              </div>
+              {% endfor %}
+              {% for field in custom_account %}
+              <div class="sk-field" data-field="custom-{{ field.id }}">
+                <label>{{ field.name }}{% if field.required %} *{% endif %}</label>
+                {% if field.type == 'select' %}
+                <select name="custom_field[account][{{ field.id }}]">
+                  <option value=""></option>
+                  {% for option in field.options %}
+                  <option value="{{ option.custom_field_value_id }}" {% if field.value == option.custom_field_value_id %}selected{% endif %}>{{ option.name }}</option>
+                  {% endfor %}
+                </select>
+                {% elseif field.type == 'textarea' %}
+                <textarea name="custom_field[account][{{ field.id }}]">{{ field.value }}</textarea>
+                {% else %}
+                <input type="text" name="custom_field[account][{{ field.id }}]" value="{{ field.value }}">
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% if register_enabled %}
+            <label class="sk-check"><input type="checkbox" name="register" value="1"> {{ text_register }}</label>
+            <div class="sk-field" data-field="password"><label>{{ text_register }}</label><input type="password" name="password" autocomplete="new-password"></div>
+            {% endif %}
+          </section>
+
+          <section class="sk-card" id="sk-address" {% if address_mode != 'address' and address_mode != 'np_courier' %}style="display:none"{% endif %}>
+            <h2>{{ text_shipping }}</h2>
+            <div class="sk-fields">
+              {% if show_country %}
+              <div class="sk-field is-half" data-field="country_id">
+                <label>Country</label>
+                <select name="country_id">
+                  {% for country in countries %}
+                  <option value="{{ country.country_id }}" {% if country.country_id == country_id %}selected{% endif %}>{{ country.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% else %}
+              <input type="hidden" name="country_id" value="{{ country_id }}">
+              {% endif %}
+              {% if show_zone %}
+              <div class="sk-field is-half" data-field="zone_id">
+                <label>Region</label>
+                <select name="zone_id">
+                  <option value="0">—</option>
+                  {% for zone in zones %}
+                  <option value="{{ zone.zone_id }}" {% if zone.zone_id == zone_id %}selected{% endif %}>{{ zone.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% else %}
+              <input type="hidden" name="zone_id" value="{{ zone_id }}">
+              {% endif %}
+              {% for field in address_fields %}
+              <div class="sk-field {% if field.width == 'half' %}is-half{% endif %}" data-field="{{ field.name }}">
+                <label>{{ field.label }}{% if field.required %} *{% endif %}</label>
+                <input type="text" name="{{ field.name }}" value="{{ field.value }}">
+              </div>
+              {% endfor %}
+              {% for field in custom_address %}
+              <div class="sk-field">
+                <label>{{ field.name }}</label>
+                <input type="text" name="custom_field[address][{{ field.id }}]" value="{{ field.value }}">
+              </div>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section class="sk-card" id="sk-np" {% if not np_on %}style="display:none"{% endif %}>
+            <h2>{{ text_np }}</h2>
+            <div class="sk-seg">
+              <button type="button" class="sk-textbtn {% if np_type != 'postomat' %}is-on{% endif %}" data-np-type="branch">{{ text_branch }}</button>
+              <button type="button" class="sk-textbtn {% if np_type == 'postomat' %}is-on{% endif %}" data-np-type="postomat">{{ text_postomat }}</button>
+            </div>
+            <input type="hidden" name="np_type" id="sk-np-type" value="{{ np_type }}">
+            <div class="sk-field" data-field="np_city">
+              <label>{{ text_city }}</label>
+              <input type="text" name="np_city" id="sk-np-city" value="{{ np_city }}" autocomplete="off">
+              <input type="hidden" name="np_city_ref" id="sk-np-city-ref" value="{{ np_city_ref }}">
+              <div id="sk-np-cities" class="sk-np-list" style="display:none"></div>
+            </div>
+            <div class="sk-field" id="sk-np-warehouse" data-field="np_wh">
+              <label>{{ text_branch }}</label>
+              {% if np_api %}
+              <select name="np_wh" id="sk-np-wh"><option value="">—</option></select>
+              <input type="hidden" name="np_wh_label" id="sk-np-wh-label" value="{{ np_wh_label }}">
+              {% else %}
+              <input type="text" name="np_wh_label" id="sk-np-wh-label" value="{{ np_wh_label }}">
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="sk-card">
+            <h2>{{ text_shipping }}</h2>
+            <div id="sk-shipping-box">{{ shipping_html|raw }}</div>
+          </section>
+          <section class="sk-card">
+            <h2>{{ text_payment }}</h2>
+            <div id="sk-payment-box">{{ payment_html|raw }}</div>
+          </section>
+          {% if comment_on %}
+          <section class="sk-card">
+            <h2>{{ text_comment }}</h2>
+            <div class="sk-field"><textarea name="comment">{{ comment }}</textarea></div>
+          </section>
+          {% endif %}
+          {% if agree %}
+          <label class="sk-check" data-field="agree"><input type="checkbox" name="agree" value="1"> {{ agree|raw }}</label>
+          {% endif %}
+        </div>
+        <aside class="sk-summary">
+          <section class="sk-card">
+            <h2>{{ heading_title }}</h2>
+            <div id="sk-items">{{ items_html|raw }}</div>
+            {% if coupon_on %}
+            <div class="sk-field" data-field="coupon" style="margin-top:12px">
+              <label>{{ text_coupon }}</label>
+              <div class="sk-row">
+                <input type="text" id="sk-coupon" value="{{ coupon }}">
+                <button type="button" class="sk-textbtn" id="sk-coupon-btn" style="width:auto">OK</button>
+              </div>
+            </div>
+            {% endif %}
+            <div id="sk-totals">{{ totals_html|raw }}</div>
+            <button type="submit" class="sk-btn" id="sk-submit">{{ button_confirm }} · <span id="sk-submit-sum">{{ total_label }}</span></button>
+            <div id="sk-paymount" class="sk-paymount"></div>
+          </section>
+        </aside>
+      </div>
+    </form>
+    {{ content_bottom }}
+  </div>
+</div>
+{% if custom_css %}
+<style>{{ custom_css|raw }}</style>
+{% endif %}
+<script>window.StorinkaConfig = {{ config_json|raw }};</script>
+{{ footer }}

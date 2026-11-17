@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+  <name>Storinka Checkout</name>
+  <code>storinka_checkout</code>
+  <version>1.0.0</version>
+  <author>Storinka</author>
+  <link>https://github.com/Serhonys/storinka-checkout</link>
+  <file path="catalog/controller/checkout/checkout.php">
+    <operation>
+      <search><![CDATA[public function index() {]]></search>
+      <add position="after"><![CDATA[
+		if ($this->config->get('module_storinka_status') && empty($this->request->get['storinka_off'])) {
+			$storinka_html = $this->load->controller('extension/module/storinka/render');
+			if ($storinka_html) {
+				$this->response->setOutput($storinka_html);
+				return;
+			}
+		}
+]]></add>
+    </operation>
+  </file>
+</modification>

@@ -1,0 +1,5 @@
+<ul class="sk-totals">
+  {% for total in totals %}
+  <li class="{% if total.code == 'total' %}is-grand{% endif %}"><span>{{ total.title }}</span><span>{{ total.text }}</span></li>
+  {% endfor %}
+</ul>
